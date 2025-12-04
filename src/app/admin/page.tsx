@@ -23,6 +23,17 @@ const TIERS: Tier[] = [
 
 const ROLES: Role[] = ['탑', '정글', '미드', '원딜', '서폿'];
 
+// localStorage 헬퍼
+function getFromStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue;
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
 export default function AdminPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<TeamLeader[]>([]);
@@ -48,16 +59,14 @@ export default function AdminPage() {
   });
   const [isEditingTeam, setIsEditingTeam] = useState(false);
 
-  // 데이터 로드
-  const loadData = async () => {
+  // 데이터 로드 (localStorage에서)
+  const loadData = () => {
     setIsLoading(true);
     try {
-      const [playersRes, teamsRes] = await Promise.all([
-        fetch('/api/players'),
-        fetch('/api/teams'),
-      ]);
-      setPlayers(await playersRes.json());
-      setTeams(await teamsRes.json());
+      const storedPlayers = getFromStorage<Player[]>('lol-auction-players', []);
+      const storedTeams = getFromStorage<TeamLeader[]>('lol-auction-team-leaders', []);
+      setPlayers(storedPlayers);
+      setTeams(storedTeams);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -70,20 +79,20 @@ export default function AdminPage() {
   }, []);
 
   // 선수 관련 핸들러
-  const handlePlayerSubmit = async (e: React.FormEvent) => {
+  const handlePlayerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (isEditingPlayer) {
-        await updatePlayer(playerForm as Player);
+        updatePlayer(playerForm as Player);
       } else {
-        await addPlayer({
+        addPlayer({
           name: playerForm.name,
           tier: playerForm.tier,
           mainRole: playerForm.mainRole,
           subRole: playerForm.subRole as Role,
         });
       }
-      await loadData();
+      loadData();
       resetPlayerForm();
     } catch (error) {
       console.error('Failed to save player:', error);
@@ -95,11 +104,11 @@ export default function AdminPage() {
     setIsEditingPlayer(true);
   };
 
-  const handleDeletePlayer = async (id: string) => {
+  const handleDeletePlayer = (id: string) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     try {
-      await deletePlayer(id);
-      await loadData();
+      deletePlayer(id);
+      loadData();
     } catch (error) {
       console.error('Failed to delete player:', error);
     }
@@ -117,19 +126,19 @@ export default function AdminPage() {
   };
 
   // 팀장 관련 핸들러
-  const handleTeamSubmit = async (e: React.FormEvent) => {
+  const handleTeamSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (isEditingTeam) {
-        await updateTeamLeader(teamForm as TeamLeader);
+        updateTeamLeader(teamForm as TeamLeader);
       } else {
-        await addTeamLeader({
+        addTeamLeader({
           name: teamForm.name,
           initialPoints: teamForm.initialPoints,
           currentPoints: teamForm.currentPoints,
         });
       }
-      await loadData();
+      loadData();
       resetTeamForm();
     } catch (error) {
       console.error('Failed to save team:', error);
@@ -141,11 +150,11 @@ export default function AdminPage() {
     setIsEditingTeam(true);
   };
 
-  const handleDeleteTeam = async (id: string) => {
+  const handleDeleteTeam = (id: string) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     try {
-      await deleteTeamLeader(id);
-      await loadData();
+      deleteTeamLeader(id);
+      loadData();
     } catch (error) {
       console.error('Failed to delete team:', error);
     }
@@ -162,21 +171,35 @@ export default function AdminPage() {
   };
 
   // 경매 리셋
-  const handleResetAuction = async () => {
+  const handleResetAuction = () => {
     if (!confirm('경매 상태를 초기화하시겠습니까? 모든 낙찰 기록이 삭제됩니다.')) return;
     try {
-      await fetch('/api/auction-state', { method: 'DELETE' });
+      // 경매 상태 삭제
+      localStorage.removeItem('lol-auction-state');
       // 팀장 currentPoints를 initialPoints로 리셋
       for (const team of teams) {
-        await updateTeamLeader({
+        updateTeamLeader({
           ...team,
           currentPoints: team.initialPoints,
         });
       }
-      await loadData();
+      loadData();
       alert('경매가 초기화되었습니다.');
     } catch (error) {
       console.error('Failed to reset auction:', error);
+    }
+  };
+
+  // 전체 데이터 리셋 (초기 JSON으로)
+  const handleResetAllData = () => {
+    if (!confirm('모든 데이터를 초기 상태로 되돌리시겠습니까? (선수, 팀장 모두 초기화)')) return;
+    try {
+      localStorage.removeItem('lol-auction-players');
+      localStorage.removeItem('lol-auction-team-leaders');
+      localStorage.removeItem('lol-auction-state');
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to reset all data:', error);
     }
   };
 
@@ -194,9 +217,15 @@ export default function AdminPage() {
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">관리자 페이지</h1>
-          <p className="text-[var(--text-secondary)]">선수 및 팀장 데이터 관리</p>
+          <p className="text-[var(--text-secondary)]">선수 및 팀장 데이터 관리 (localStorage)</p>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={handleResetAllData}
+            className="px-4 py-2 rounded-lg bg-[var(--accent-magenta)]/20 text-[var(--accent-magenta)] hover:bg-[var(--accent-magenta)]/30 transition-colors"
+          >
+            전체 초기화
+          </button>
           <button
             onClick={handleResetAuction}
             className="px-4 py-2 rounded-lg bg-[var(--accent-red)]/20 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/30 transition-colors"
@@ -501,4 +530,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

@@ -101,7 +101,7 @@ export default function Home() {
       <div style={{ flex: 1, minHeight: '100px', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', flexShrink: 0 }}>팀 구성</h2>
         <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', overflowY: 'auto' }}>
-          {state.teams.map((team, index) => (
+          {sortedTeams.map((team, index) => (
             <TeamCard key={team.leader.id} team={team} index={index} />
           ))}
         </div>
