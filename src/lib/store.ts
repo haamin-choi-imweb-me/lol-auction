@@ -10,14 +10,14 @@ import {
 } from '@/types';
 
 // 초기 데이터 (JSON에서 가져옴)
-import initialPlayers from '../../data/players.json';
-import initialTeamLeaders from '../../data/teams.json';
+import initialPlayers from './players';
+import initialTeamLeaders from './teams';
 
 // localStorage 키
-const STORAGE_KEYS = {
-  PLAYERS: 'lol-auction-players',
-  TEAM_LEADERS: 'lol-auction-team-leaders',
-  AUCTION_STATE: 'lol-auction-state',
+export const STORAGE_KEYS = {
+  PLAYERS: 'lol-auction-players_v1',
+  TEAM_LEADERS: 'lol-auction-team-leaders_v1',
+  AUCTION_STATE: 'lol-auction-state_v1',
 };
 
 // localStorage 헬퍼 함수들

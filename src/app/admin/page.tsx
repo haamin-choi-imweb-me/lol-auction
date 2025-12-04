@@ -11,6 +11,7 @@ import {
   addTeamLeader,
   updateTeamLeader,
   deleteTeamLeader,
+  STORAGE_KEYS,
 } from '@/lib/store';
 
 const TIERS: Tier[] = [
@@ -68,8 +69,8 @@ export default function AdminPage() {
   const loadData = () => {
     setIsLoading(true);
     try {
-      const storedPlayers = getFromStorage<Player[]>('lol-auction-players', []);
-      const storedTeams = getFromStorage<TeamLeader[]>('lol-auction-team-leaders', []);
+      const storedPlayers = getFromStorage<Player[]>(STORAGE_KEYS.PLAYERS, []);
+      const storedTeams = getFromStorage<TeamLeader[]>(STORAGE_KEYS.TEAM_LEADERS, []);
       setPlayers(storedPlayers);
       setTeams(storedTeams);
     } catch (error) {
@@ -180,7 +181,7 @@ export default function AdminPage() {
     if (!confirm('경매 상태를 초기화하시겠습니까? 모든 낙찰 기록이 삭제됩니다.')) return;
     try {
       // 경매 상태 삭제
-      localStorage.removeItem('lol-auction-state');
+      localStorage.removeItem(STORAGE_KEYS.AUCTION_STATE);
       // 팀장 currentPoints를 initialPoints로 리셋
       for (const team of teams) {
         updateTeamLeader({
