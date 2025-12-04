@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Player, TeamLeader, Tier, Role } from '@/types';
@@ -58,6 +58,11 @@ export default function AdminPage() {
     currentPoints: 3000,
   });
   const [isEditingTeam, setIsEditingTeam] = useState(false);
+
+  // 팀장 점수순 정렬
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => b.currentPoints - a.currentPoints);
+  }, [teams]);
 
   // 데이터 로드 (localStorage에서)
   const loadData = () => {
@@ -190,19 +195,6 @@ export default function AdminPage() {
     }
   };
 
-  // 전체 데이터 리셋 (초기 JSON으로)
-  const handleResetAllData = () => {
-    if (!confirm('모든 데이터를 초기 상태로 되돌리시겠습니까? (선수, 팀장 모두 초기화)')) return;
-    try {
-      localStorage.removeItem('lol-auction-players');
-      localStorage.removeItem('lol-auction-team-leaders');
-      localStorage.removeItem('lol-auction-state');
-      window.location.reload();
-    } catch (error) {
-      console.error('Failed to reset all data:', error);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -217,15 +209,9 @@ export default function AdminPage() {
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">관리자 페이지</h1>
-          <p className="text-[var(--text-secondary)]">선수 및 팀장 데이터 관리 (localStorage)</p>
+          <p className="text-[var(--text-secondary)]">선수 및 팀장 데이터 관리</p>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            onClick={handleResetAllData}
-            className="px-4 py-2 rounded-lg bg-[var(--accent-magenta)]/20 text-[var(--accent-magenta)] hover:bg-[var(--accent-magenta)]/30 transition-colors"
-          >
-            전체 초기화
-          </button>
           <button
             onClick={handleResetAuction}
             className="px-4 py-2 rounded-lg bg-[var(--accent-red)]/20 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/30 transition-colors"
@@ -342,13 +328,13 @@ export default function AdminPage() {
               </form>
             </div>
 
-            {/* 팀장 목록 */}
+            {/* 팀장 목록 (점수순 정렬) */}
             <div className="lg:col-span-2 glass-card p-6">
               <h2 className="text-xl font-bold mb-4 text-[var(--text-primary)]">
-                팀장 목록
+                팀장 목록 (점수순)
               </h2>
               <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                {teams.map((team, idx) => (
+                {sortedTeams.map((team, idx) => (
                   <motion.div
                     key={team.id}
                     initial={{ opacity: 0, x: -10 }}
@@ -363,7 +349,7 @@ export default function AdminPage() {
                       <div>
                         <p className="font-semibold text-[var(--text-primary)]">{team.name}</p>
                         <p className="text-sm text-[var(--text-secondary)]">
-                          초기: {team.initialPoints.toLocaleString()} / 현재: <span className="text-[var(--accent-cyan)]">{team.currentPoints.toLocaleString()}</span>
+                          현재: <span className="text-[var(--accent-cyan)]">{team.currentPoints.toLocaleString()}</span> / 초기: {team.initialPoints.toLocaleString()}
                         </p>
                       </div>
                     </div>
