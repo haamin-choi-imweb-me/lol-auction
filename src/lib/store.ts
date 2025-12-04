@@ -496,6 +496,63 @@ export function useAuctionStore() {
     }));
   }, []);
 
+  // 지명 취소 (멤버 제거)
+  const removeMember = useCallback((teamId: string, playerId: string) => {
+    setState((prev) => {
+      const teamIndex = prev.teams.findIndex((t) => t.leader.id === teamId);
+      if (teamIndex === -1) return prev;
+
+      const team = prev.teams[teamIndex];
+      const memberIndex = team.members.findIndex((m) => m.player.id === playerId);
+      if (memberIndex === -1) return prev;
+
+      const member = team.members[memberIndex];
+      const removedPlayer = member.player;
+      const refundPrice = member.price;
+
+      // 팀 업데이트 (멤버 제거, 점수 복구)
+      const updatedTeam: Team = {
+        ...team,
+        leader: {
+          ...team.leader,
+          currentPoints: team.leader.currentPoints + refundPrice,
+        },
+        members: team.members.filter((m) => m.player.id !== playerId),
+        totalSpent: team.totalSpent - refundPrice,
+      };
+
+      const updatedTeams = [...prev.teams];
+      updatedTeams[teamIndex] = updatedTeam;
+
+      // 선수를 다시 미배정으로
+      const newAvailablePlayers = [...prev.availablePlayers, removedPlayer];
+
+      // localStorage에 상태 저장
+      const savedState: SavedAuctionState = {
+        teams: updatedTeams.map((t) => ({
+          leaderId: t.leader.id,
+          currentPoints: t.leader.currentPoints,
+          members: t.members.map((m) => ({
+            playerId: m.player.id,
+            price: m.price,
+            pickOrder: m.pickOrder,
+          })),
+          totalSpent: t.totalSpent,
+        })),
+        assignedPlayerIds: prev.players
+          .filter((p) => !newAvailablePlayers.find((ap) => ap.id === p.id))
+          .map((p) => p.id),
+      };
+      saveAuctionState(savedState);
+
+      return {
+        ...prev,
+        teams: updatedTeams,
+        availablePlayers: newAvailablePlayers,
+      };
+    });
+  }, []);
+
   // 전체 리셋
   const resetAuction = useCallback(() => {
     deleteAuctionState();
@@ -530,6 +587,7 @@ export function useAuctionStore() {
     pickPlayer,
     pass,
     cancelRound,
+    removeMember,
     resetAuction,
     sortPlayersByTier,
     sortTeamsByPoints,

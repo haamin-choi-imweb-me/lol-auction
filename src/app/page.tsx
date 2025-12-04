@@ -18,6 +18,7 @@ export default function Home() {
     pickPlayer,
     pass,
     cancelRound,
+    removeMember,
     sortPlayersByTier,
     sortTeamsByPoints,
     refreshData,
@@ -102,7 +103,7 @@ export default function Home() {
         <h2 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', flexShrink: 0 }}>팀 구성</h2>
         <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', overflowY: 'auto' }}>
           {sortedTeams.map((team, index) => (
-            <TeamCard key={team.leader.id} team={team} index={index} />
+            <TeamCard key={team.leader.id} team={team} index={index} onRemoveMember={removeMember} />
           ))}
         </div>
       </div>

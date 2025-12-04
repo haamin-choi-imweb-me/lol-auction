@@ -6,6 +6,7 @@ import { Team } from '@/types';
 interface TeamCardProps {
   team: Team;
   index: number;
+  onRemoveMember?: (teamId: string, playerId: string) => void;
 }
 
 function getTierClass(tier: string): string {
@@ -36,8 +37,23 @@ function getRoleClass(role: string): string {
   return roleMap[role] || '';
 }
 
-export default function TeamCard({ team, index }: TeamCardProps) {
+const ROLE_ORDER: Record<string, number> = {
+  '탑': 0,
+  '정글': 1,
+  '미드': 2,
+  '원딜': 3,
+  '서폿': 4,
+};
+
+export default function TeamCard({ team, index, onRemoveMember }: TeamCardProps) {
   const emptySlots = 4 - team.members.length;
+  
+  // 주라인 기준 정렬
+  const sortedMembers = [...team.members].sort((a, b) => {
+    const orderA = ROLE_ORDER[a.player.mainRole] ?? 99;
+    const orderB = ROLE_ORDER[b.player.mainRole] ?? 99;
+    return orderA - orderB;
+  });
 
   return (
     <motion.div
@@ -67,10 +83,10 @@ export default function TeamCard({ team, index }: TeamCardProps) {
 
       {/* Team members */}
       <div className="space-y-1.5">
-        {team.members.map((member, idx) => (
+        {sortedMembers.map((member, idx) => (
           <div
             key={member.player.id}
-            className="flex items-center justify-between p-1.5 rounded bg-[var(--bg-secondary)]"
+            className="flex items-center justify-between p-1.5 rounded bg-[var(--bg-secondary)] group"
           >
             <div className="flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-[var(--accent-gold)]/20 text-[var(--accent-gold)] flex items-center justify-center text-[10px] font-bold">
@@ -85,7 +101,23 @@ export default function TeamCard({ team, index }: TeamCardProps) {
               <span className={`px-2 py-0.5 rounded text-[10px] ${getRoleClass(member.player.mainRole)}`}>
                 {member.player.mainRole}
               </span>
+              {member.player.subRole && (
+                <span className="px-1.5 py-0.5 rounded text-[9px] bg-[var(--accent-gold)]/20 text-[var(--accent-gold)]">
+                  +{member.player.subRole}
+                </span>
+              )}
               <span className="text-xs font-semibold text-[var(--accent-cyan)]">{member.price}</span>
+              {onRemoveMember && (
+                <button
+                  onClick={() => onRemoveMember(team.leader.id, member.player.id)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded flex items-center justify-center bg-[var(--accent-red)]/20 text-[var(--accent-red)] hover:bg-[var(--accent-red)]/40"
+                  title="지명 취소"
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         ))}

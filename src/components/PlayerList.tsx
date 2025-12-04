@@ -37,6 +37,12 @@ function getTierClass(tier: string): string {
   return tierMap[baseTier] || 'tier-iron';
 }
 
+// 선수 + 부라인 여부
+interface PlayerWithRole {
+  player: Player;
+  isSub: boolean;
+}
+
 export default function PlayerList({
   players,
   onSelectPlayer,
@@ -54,25 +60,37 @@ export default function PlayerList({
     );
   }, [players, searchQuery]);
 
+  // 주라인 + 부라인 모두 포함해서 그룹화
   const playersByRole = useMemo(() => {
-    const grouped: Record<string, Player[]> = {
+    const grouped: Record<string, PlayerWithRole[]> = {
       '탑': [], '정글': [], '미드': [], '원딜': [], '서폿': [],
     };
 
     filteredPlayers.forEach((player) => {
+      // 주라인에 추가
       if (grouped[player.mainRole]) {
-        grouped[player.mainRole].push(player);
+        grouped[player.mainRole].push({ player, isSub: false });
+      }
+      // 부라인에도 추가 (있으면)
+      if (player.subRole && grouped[player.subRole]) {
+        grouped[player.subRole].push({ player, isSub: true });
       }
     });
 
+    // 티어순 정렬 (주라인 우선, 그 다음 티어순)
     Object.keys(grouped).forEach((role) => {
-      grouped[role].sort((a, b) => TIER_ORDER[b.tier] - TIER_ORDER[a.tier]);
+      grouped[role].sort((a, b) => {
+        // 주라인 우선
+        if (a.isSub !== b.isSub) return a.isSub ? 1 : -1;
+        // 티어순
+        return TIER_ORDER[b.player.tier] - TIER_ORDER[a.player.tier];
+      });
     });
 
     return grouped;
   }, [filteredPlayers]);
 
-  // 라인별 통계
+  // 라인별 통계 (주라인 기준)
   const roleStats = useMemo(() => {
     const stats = { 탑: 0, 정글: 0, 미드: 0, 원딜: 0, 서폿: 0 };
     players.forEach(p => {
@@ -161,37 +179,50 @@ export default function PlayerList({
           {ROLES.map((role) => {
             const rolePlayers = playersByRole[role];
             const roleColor = ROLE_COLORS[role];
+            // 주라인 수만 카운트
+            const mainCount = rolePlayers.filter(p => !p.isSub).length;
+            const subCount = rolePlayers.filter(p => p.isSub).length;
 
             return (
               <div key={role} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                 <div className={`${roleColor.bg} ${roleColor.border}`} style={{ padding: '4px 8px', borderRadius: '4px 4px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, borderBottom: '1px solid' }}>
                   <span className={roleColor.text} style={{ fontWeight: 'bold', fontSize: '12px' }}>{role}</span>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{rolePlayers.length}</span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                    {mainCount}{subCount > 0 && <span style={{ color: 'var(--accent-gold)' }}>+{subCount}</span>}
+                  </span>
                 </div>
 
                 <div className={`${roleColor.bg} ${roleColor.border}`} style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '3px', borderRadius: '0 0 4px 4px', borderTop: 'none', display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   {rolePlayers.length === 0 ? (
                     <div style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)', padding: '8px 0' }}>-</div>
                   ) : (
-                    rolePlayers.map((player) => (
+                    rolePlayers.map(({ player, isSub }) => (
                       <div
-                        key={player.id}
+                        key={`${player.id}-${isSub ? 'sub' : 'main'}`}
                         onClick={() => isSelectable && onSelectPlayer?.(player)}
                         style={{
                           padding: '4px 6px',
                           borderRadius: '4px',
-                          background: selectedPlayerId === player.id ? 'rgba(0,245,255,0.3)' : 'rgba(18,18,26,0.8)',
-                          border: selectedPlayerId === player.id ? '1px solid var(--accent-cyan)' : '1px solid transparent',
+                          background: selectedPlayerId === player.id ? 'rgba(0,245,255,0.3)' : isSub ? 'rgba(255,215,0,0.1)' : 'rgba(18,18,26,0.8)',
+                          border: selectedPlayerId === player.id ? '1px solid var(--accent-cyan)' : isSub ? '1px solid rgba(255,215,0,0.3)' : '1px solid transparent',
                           cursor: isSelectable ? 'pointer' : 'default',
-                          flexShrink: 0
+                          flexShrink: 0,
+                          opacity: isSub ? 0.85 : 1
                         }}
                       >
-                        <p style={{ fontSize: '11px', fontWeight: 500, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }} title={player.name}>
-                          {player.name}
-                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                          {isSub && (
+                            <span style={{ fontSize: '8px', padding: '1px 3px', background: 'var(--accent-gold)', color: 'black', borderRadius: '2px', fontWeight: 'bold' }}>부</span>
+                          )}
+                          <p style={{ fontSize: '11px', fontWeight: 500, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={player.name}>
+                            {player.name}
+                          </p>
+                        </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span className={getTierClass(player.tier)} style={{ fontSize: '10px' }}>{player.tier}</span>
-                          {player.subRole && <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>+{player.subRole}</span>}
+                          <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                            {isSub ? `주:${player.mainRole}` : player.subRole ? `부:${player.subRole}` : ''}
+                          </span>
                         </div>
                       </div>
                     ))
