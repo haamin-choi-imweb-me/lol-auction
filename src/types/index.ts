@@ -20,7 +20,8 @@ export interface Player {
   name: string;
   tier: Tier;
   mainRole: Role;
-  subRole: Role;
+  subRole: Role[]; // 보조 라인 배열 (여러 개 가능)
+  memo?: string; // 메모 (선택사항)
 }
 
 // 팀장 타입

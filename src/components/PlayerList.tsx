@@ -72,8 +72,12 @@ export default function PlayerList({
         grouped[player.mainRole].push({ player, isSub: false });
       }
       // 부라인에도 추가 (있으면)
-      if (player.subRole && grouped[player.subRole]) {
-        grouped[player.subRole].push({ player, isSub: true });
+      if (player.subRole && player.subRole.length > 0) {
+        player.subRole.forEach((subRole) => {
+          if (grouped[subRole]) {
+            grouped[subRole].push({ player, isSub: true });
+          }
+        });
       }
     });
 
@@ -217,12 +221,25 @@ export default function PlayerList({
                           <p style={{ fontSize: '11px', fontWeight: 500, color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }} title={player.name}>
                             {player.name}
                           </p>
+                          {player.memo && (
+                            <span style={{ fontSize: '8px', padding: '1px 4px', background: 'rgba(255,215,0,0.2)', color: 'var(--accent-gold)', borderRadius: '3px', fontStyle: 'italic', border: '1px solid rgba(255,215,0,0.3)' }}>
+                              {player.memo}
+                            </span>
+                          )}
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2px' }}>
                           <span className={getTierClass(player.tier)} style={{ fontSize: '10px' }}>{player.tier}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
-                            {isSub ? `주:${player.mainRole}` : player.subRole ? `부:${player.subRole}` : ''}
-                          </span>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            {isSub ? (
+                              <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>주:{player.mainRole}</span>
+                            ) : (
+                              player.subRole && Array.isArray(player.subRole) && player.subRole.length > 0 && (
+                                <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+                                  부:{player.subRole.join(', ')}
+                                </span>
+                              )
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))

@@ -7,13 +7,14 @@ import {
   Team,
   AuctionHistoryItem,
   TIER_ORDER,
+  Role,
 } from '@/types';
 
 // 초기 데이터 (JSON에서 가져옴)
 import initialPlayers from './players';
 import initialTeamLeaders from './teams';
 
-const VERSION = 'v3';
+const VERSION = 'v5';
 
 // localStorage 키
 export const STORAGE_KEYS = {
@@ -21,6 +22,40 @@ export const STORAGE_KEYS = {
   TEAM_LEADERS: `lol-auction-team-leaders_${VERSION}`,
   AUCTION_STATE: `lol-auction-state_${VERSION}`,
 };
+
+// 이전 버전 키 삭제
+function cleanupOldVersions() {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const currentVersionNum = parseInt(VERSION.replace('v', ''));
+    const keyPrefixes = ['lol-auction-players_', 'lol-auction-team-leaders_', 'lol-auction-state_'];
+    
+    // 모든 localStorage 키 확인
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      
+      // 각 키 프리픽스에 대해 확인
+      for (const prefix of keyPrefixes) {
+        if (key.startsWith(prefix)) {
+          const versionPart = key.replace(prefix, '');
+          // v1, v2, v3 형식인지 확인
+          if (versionPart.match(/^v\d+$/)) {
+            const versionNum = parseInt(versionPart.replace('v', ''));
+            // 현재 버전보다 낮은 버전이면 삭제
+            if (versionNum < currentVersionNum) {
+              localStorage.removeItem(key);
+              console.log(`Deleted old version key: ${key}`);
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to cleanup old versions:', error);
+  }
+}
 
 // localStorage 헬퍼 함수들
 function getFromStorage<T>(key: string, defaultValue: T): T {
@@ -54,7 +89,18 @@ function removeFromStorage(key: string): void {
 // 선수 데이터 로드 (localStorage 우선, 없으면 초기 데이터)
 function loadPlayers(): Player[] {
   const stored = getFromStorage<Player[] | null>(STORAGE_KEYS.PLAYERS, null);
-  if (stored && stored.length > 0) return stored;
+  if (stored && stored.length > 0) {
+    // 이전 형식 호환성: subRole이 문자열이면 배열로 변환
+    return stored.map((player) => ({
+      ...player,
+      subRole: Array.isArray(player.subRole) 
+        ? player.subRole 
+        : player.subRole && typeof player.subRole === 'string' && player.subRole !== ''
+          ? [player.subRole as Role]
+          : [],
+      memo: player.memo || undefined,
+    }));
+  }
   // 초기 데이터 저장하고 반환
   saveToStorage(STORAGE_KEYS.PLAYERS, initialPlayers);
   return initialPlayers as Player[];
@@ -235,6 +281,9 @@ export function useAuctionStore() {
   const loadData = useCallback(() => {
     setIsLoading(true);
     try {
+      // 이전 버전 키들 정리
+      cleanupOldVersions();
+      
       const players = loadPlayers();
       const teamLeaders = loadTeamLeaders();
       const savedState = loadAuctionState();

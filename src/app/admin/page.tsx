@@ -47,7 +47,8 @@ export default function AdminPage() {
     name: '',
     tier: '다이아4' as Tier,
     mainRole: '미드' as Role,
-    subRole: '' as Role | '',
+    subRole: [] as Role[],
+    memo: '',
   });
   const [isEditingPlayer, setIsEditingPlayer] = useState(false);
 
@@ -96,7 +97,8 @@ export default function AdminPage() {
           name: playerForm.name,
           tier: playerForm.tier,
           mainRole: playerForm.mainRole,
-          subRole: playerForm.subRole as Role,
+          subRole: playerForm.subRole,
+          memo: playerForm.memo || undefined,
         });
       }
       loadData();
@@ -107,7 +109,11 @@ export default function AdminPage() {
   };
 
   const handleEditPlayer = (player: Player) => {
-    setPlayerForm(player);
+    setPlayerForm({
+      ...player,
+      subRole: Array.isArray(player.subRole) ? player.subRole : player.subRole ? [player.subRole] : [],
+      memo: player.memo || '',
+    });
     setIsEditingPlayer(true);
   };
 
@@ -127,7 +133,8 @@ export default function AdminPage() {
       name: '',
       tier: '다이아4',
       mainRole: '미드',
-      subRole: '',
+      subRole: [],
+      memo: '',
     });
     setIsEditingPlayer(false);
   };
@@ -470,18 +477,39 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="block text-sm text-[var(--text-secondary)] mb-1">
-                    부 포지션 (선택)
+                    부 포지션 (복수 선택 가능)
                   </label>
-                  <select
-                    value={playerForm.subRole}
-                    onChange={(e) => setPlayerForm({ ...playerForm, subRole: e.target.value as Role | '' })}
-                    className="w-full px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-white focus:border-[var(--accent-cyan)] focus:outline-none"
-                  >
-                    <option value="">없음</option>
+                  <div className="flex flex-wrap gap-2">
                     {ROLES.map((role) => (
-                      <option key={role} value={role}>{role}</option>
+                      <label key={role} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={playerForm.subRole.includes(role)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setPlayerForm({ ...playerForm, subRole: [...playerForm.subRole, role] });
+                            } else {
+                              setPlayerForm({ ...playerForm, subRole: playerForm.subRole.filter(r => r !== role) });
+                            }
+                          }}
+                          className="w-4 h-4 rounded bg-[var(--bg-secondary)] border border-[var(--border-color)] text-[var(--accent-cyan)] focus:ring-[var(--accent-cyan)]"
+                        />
+                        <span className="text-sm text-[var(--text-primary)]">{role}</span>
+                      </label>
                     ))}
-                  </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">
+                    메모 (선택)
+                  </label>
+                  <input
+                    type="text"
+                    value={playerForm.memo}
+                    onChange={(e) => setPlayerForm({ ...playerForm, memo: e.target.value })}
+                    placeholder="예: (탑챔프로), ALL 등"
+                    className="w-full px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-white focus:border-[var(--accent-cyan)] focus:outline-none"
+                  />
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 btn-primary">
@@ -519,7 +547,8 @@ export default function AdminPage() {
                         <p className="font-semibold text-[var(--text-primary)]">{player.name}</p>
                         <p className="text-sm text-[var(--text-secondary)]">
                           {player.tier} | {player.mainRole}
-                          {player.subRole && ` / ${player.subRole}`}
+                          {player.subRole && player.subRole.length > 0 && ` / ${player.subRole.join(', ')}`}
+                          {player.memo && <span className="text-[var(--accent-gold)] italic"> ({player.memo})</span>}
                         </p>
                       </div>
                     </div>

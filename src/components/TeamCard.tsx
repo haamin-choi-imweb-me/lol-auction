@@ -97,13 +97,18 @@ export default function TeamCard({ team, index, onRemoveMember }: TeamCardProps)
                 <p className={`text-[10px] ${getTierClass(member.player.tier)}`}>{member.player.tier}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className={`px-2 py-0.5 rounded text-[10px] ${getRoleClass(member.player.mainRole)}`}>
                 {member.player.mainRole}
               </span>
-              {member.player.subRole && (
+              {member.player.subRole && member.player.subRole.length > 0 && (
                 <span className="px-1.5 py-0.5 rounded text-[9px] bg-[var(--accent-gold)]/20 text-[var(--accent-gold)]">
-                  +{member.player.subRole}
+                  +{member.player.subRole.join(', ')}
+                </span>
+              )}
+              {member.player.memo && (
+                <span className="px-1.5 py-0.5 rounded text-[9px] bg-[var(--accent-magenta)]/20 text-[var(--accent-magenta)] italic">
+                  {member.player.memo}
                 </span>
               )}
               <span className="text-xs font-semibold text-[var(--accent-cyan)]">{member.price}</span>
