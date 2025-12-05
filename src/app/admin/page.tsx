@@ -158,7 +158,11 @@ export default function AdminPage() {
   };
 
   const handleEditTeam = (team: TeamLeader) => {
-    setTeamForm(team);
+    setTeamForm({
+      ...team,
+      initialPoints: String(team.initialPoints),
+      currentPoints: String(team.currentPoints),
+    });
     setIsEditingTeam(true);
   };
 
