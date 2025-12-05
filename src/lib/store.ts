@@ -13,11 +13,13 @@ import {
 import initialPlayers from './players';
 import initialTeamLeaders from './teams';
 
+const VERSION = 'v2';
+
 // localStorage 키
 export const STORAGE_KEYS = {
-  PLAYERS: 'lol-auction-players_v1',
-  TEAM_LEADERS: 'lol-auction-team-leaders_v1',
-  AUCTION_STATE: 'lol-auction-state_v1',
+  PLAYERS: `lol-auction-players_${VERSION}`,
+  TEAM_LEADERS: `lol-auction-team-leaders_${VERSION}`,
+  AUCTION_STATE: `lol-auction-state_${VERSION}`,
 };
 
 // localStorage 헬퍼 함수들

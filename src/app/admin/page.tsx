@@ -55,7 +55,7 @@ export default function AdminPage() {
   const [teamForm, setTeamForm] = useState({
     id: '',
     name: '',
-    initialPoints: '' as string | number,
+    initialPoints: '' as string,
     currentPoints: '' as string | number,
     tier: '' as Tier | '',
   });
