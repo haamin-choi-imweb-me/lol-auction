@@ -55,8 +55,8 @@ export default function AdminPage() {
   const [teamForm, setTeamForm] = useState({
     id: '',
     name: '',
-    initialPoints: 3000,
-    currentPoints: 3000,
+    initialPoints: '' as string | number,
+    currentPoints: '' as string | number,
     tier: '' as Tier | '',
   });
   const [isEditingTeam, setIsEditingTeam] = useState(false);
@@ -137,12 +137,17 @@ export default function AdminPage() {
     e.preventDefault();
     try {
       if (isEditingTeam) {
-        updateTeamLeader(teamForm as TeamLeader);
+        updateTeamLeader({
+          ...teamForm,
+          initialPoints: Number(teamForm.initialPoints),
+          currentPoints: Number(teamForm.currentPoints),
+        } as TeamLeader);
       } else {
         addTeamLeader({
           name: teamForm.name,
-          initialPoints: teamForm.initialPoints,
-          currentPoints: teamForm.currentPoints,
+          initialPoints: Number(teamForm.initialPoints),
+          currentPoints: Number(teamForm.currentPoints),
+          tier: teamForm.tier,
         });
       }
       loadData();
@@ -171,8 +176,8 @@ export default function AdminPage() {
     setTeamForm({
       id: '',
       name: '',
-      initialPoints: 3000,
-      currentPoints: 3000,
+      initialPoints: '',
+      currentPoints: '',
       tier: '',
     });
     setIsEditingTeam(false);
@@ -289,7 +294,7 @@ export default function AdminPage() {
                     type="number"
                     value={teamForm.initialPoints}
                     onChange={(e) => {
-                      const val = Number(e.target.value);
+                      const val = e.target.value;
                       setTeamForm({
                         ...teamForm,
                         initialPoints: val,
@@ -308,7 +313,7 @@ export default function AdminPage() {
                     <input
                       type="number"
                       value={teamForm.currentPoints}
-                      onChange={(e) => setTeamForm({ ...teamForm, currentPoints: Number(e.target.value) })}
+                      onChange={(e) => setTeamForm({ ...teamForm, currentPoints: e.target.value })}
                       className="w-full px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-white focus:border-[var(--accent-gold)] focus:outline-none"
                       required
                     />

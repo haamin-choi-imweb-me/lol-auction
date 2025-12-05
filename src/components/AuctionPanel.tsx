@@ -53,7 +53,7 @@ export default function AuctionPanel({
   onCancel,
   onSetDecrement,
 }: AuctionPanelProps) {
-  const [priceDecrement, setPriceDecrement] = useState(100);
+  const [priceDecrement, setPriceDecrement] = useState<string | number>(20);
 
   // 라운드 시작 전
   if (!currentRound) {
@@ -84,17 +84,23 @@ export default function AuctionPanel({
               <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>감소 금액</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <button
-                  onClick={() => setPriceDecrement(Math.max(10, priceDecrement - 10))}
+                  onClick={() => setPriceDecrement(Number(priceDecrement) - 10)}
                   style={{ width: '28px', height: '28px', borderRadius: '4px', background: 'var(--bg-primary)', color: 'var(--accent-red)', border: 'none', cursor: 'pointer', fontSize: '16px' }}
                 >-</button>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={priceDecrement}
-                  onChange={(e) => setPriceDecrement(Math.max(10, Number(e.target.value)))}
+                  onChange={(e) => setPriceDecrement(e.target.value)}
+                  onBlur={(e) => {
+                    const cleaned = e.target.value.replace(/\D/g, '');
+                    const num = Number(cleaned);
+                    setPriceDecrement(num > 0 ? Math.max(10, num) : 10);
+                  }}
                   style={{ width: '70px', textAlign: 'center', fontSize: '14px', padding: '6px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'white' }}
                 />
                 <button
-                  onClick={() => setPriceDecrement(priceDecrement + 10)}
+                  onClick={() => setPriceDecrement(Number(priceDecrement) + 10)}
                   style={{ width: '28px', height: '28px', borderRadius: '4px', background: 'var(--bg-primary)', color: 'var(--accent-green)', border: 'none', cursor: 'pointer', fontSize: '16px' }}
                 >+</button>
               </div>
@@ -102,7 +108,7 @@ export default function AuctionPanel({
           </div>
 
           <button
-            onClick={() => onStartRound(priceDecrement)}
+            onClick={() => onStartRound(Number(priceDecrement) || 20)}
             disabled={sortedTeams.length < 2}
             style={{ 
               width: '100%', 
@@ -136,9 +142,17 @@ export default function AuctionPanel({
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>감소:</span>
           <input
-            type="number"
-            value={decrement}
-            onChange={(e) => onSetDecrement(Math.max(10, Number(e.target.value)))}
+            key={`decrement-${decrement}`}
+            type="text"
+            inputMode="numeric"
+            defaultValue={decrement}
+            onBlur={(e) => {
+              const cleaned = e.target.value.replace(/\D/g, '');
+              const num = Number(cleaned);
+              const finalVal = num > 0 ? Math.max(10, num) : 10;
+              e.target.value = String(finalVal);
+              onSetDecrement(finalVal);
+            }}
             style={{ width: '50px', textAlign: 'center', fontSize: '12px', padding: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'white' }}
           />
         </div>
