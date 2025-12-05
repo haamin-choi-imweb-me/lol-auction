@@ -18,6 +18,7 @@ export default function Home() {
     pickPlayer,
     pass,
     cancelRound,
+    undo,
     removeMember,
     sortPlayersByTier,
     sortTeamsByPoints,
@@ -90,6 +91,7 @@ export default function Home() {
             onPick={pickPlayer}
             onPass={pass}
             onCancel={cancelRound}
+            onUndo={undo}
             onSetDecrement={setPriceDecrement}
           />
         </div>

@@ -12,6 +12,7 @@ interface AuctionPanelProps {
   onPick: () => void;
   onPass: () => void;
   onCancel: () => void;
+  onUndo: () => void;
   onSetDecrement: (decrement: number) => void;
 }
 
@@ -51,6 +52,7 @@ export default function AuctionPanel({
   onPick,
   onPass,
   onCancel,
+  onUndo,
   onSetDecrement,
 }: AuctionPanelProps) {
   const [priceDecrement, setPriceDecrement] = useState<string | number>(20);
@@ -60,7 +62,9 @@ export default function AuctionPanel({
     const sortedTeams = [...teams]
       .filter((t) => t.members.length < 4)
       .sort((a, b) => b.leader.currentPoints - a.leader.currentPoints);
-    const estimatedStartingPrice = sortedTeams[1]?.leader.currentPoints || 0;
+    const estimatedStartingPrice = sortedTeams.length > 0 
+      ? Math.min(...sortedTeams.map(t => t.leader.currentPoints))
+      : 0;
 
     return (
       <div style={{ background: 'rgba(26,26,36,0.8)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -226,11 +230,17 @@ export default function AuctionPanel({
       {/* Action buttons */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '8px', flexShrink: 0 }}>
         <button
+          onClick={onUndo}
+          style={{ padding: '10px', borderRadius: '8px', fontWeight: 'bold', background: 'rgba(59,130,246,0.2)', border: '1px solid var(--accent-cyan)', color: 'var(--accent-cyan)', cursor: 'pointer', fontSize: '13px' }}
+        >
+          되돌리기
+        </button>
+        {/* <button
           onClick={onCancel}
           style={{ padding: '10px', borderRadius: '8px', fontWeight: 'bold', background: 'rgba(255,68,68,0.2)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', cursor: 'pointer', fontSize: '13px' }}
         >
           취소
-        </button>
+        </button> */}
         <button
           onClick={onPick}
           disabled={!selectedPlayer || !canAfford}

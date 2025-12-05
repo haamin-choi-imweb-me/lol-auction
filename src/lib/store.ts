@@ -13,7 +13,7 @@ import {
 import initialPlayers from './players';
 import initialTeamLeaders from './teams';
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 
 // localStorage 키
 export const STORAGE_KEYS = {
@@ -229,6 +229,7 @@ function getInitialState(): AuctionState {
 export function useAuctionStore() {
   const [state, setState] = useState<AuctionState>(getInitialState);
   const [isLoading, setIsLoading] = useState(true);
+  const [history, setHistory] = useState<AuctionState[]>([]); // Undo를 위한 히스토리
 
   // 초기 데이터 로드
   const loadData = useCallback(() => {
@@ -302,6 +303,9 @@ export function useAuctionStore() {
       const eligibleTeams = getEligibleTeamsSorted(prev.teams);
       if (eligibleTeams.length === 0) return prev;
 
+      // 이전 상태를 히스토리에 저장
+      setHistory((h) => [...h, JSON.parse(JSON.stringify(prev))]);
+
       // 시작가 = 가장 낮은 점수의 팀장
       const startingPrice = Math.min(...eligibleTeams.map(t => t.leader.currentPoints));
 
@@ -347,6 +351,9 @@ export function useAuctionStore() {
   const pickPlayer = useCallback(() => {
     setState((prev) => {
       if (!prev.currentRound || !prev.selectedPlayer) return prev;
+
+      // 이전 상태를 히스토리에 저장
+      setHistory((h) => [...h, JSON.parse(JSON.stringify(prev))]);
 
       const { currentPrice, bidOrder, currentBidderIndex, priceDecrement } = prev.currentRound;
       const currentTeam = bidOrder[currentBidderIndex];
@@ -448,6 +455,9 @@ export function useAuctionStore() {
     setState((prev) => {
       if (!prev.currentRound) return prev;
 
+      // 이전 상태를 히스토리에 저장
+      setHistory((h) => [...h, JSON.parse(JSON.stringify(prev))]);
+
       const {
         bidOrder,
         currentBidderIndex,
@@ -538,6 +548,37 @@ export function useAuctionStore() {
       currentRound: null,
       selectedPlayer: null,
     }));
+  }, []);
+
+  // 이전 상태로 되돌리기 (Undo)
+  const undo = useCallback(() => {
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const previousState = h[h.length - 1];
+      
+      // 상태 복원
+      setState(previousState);
+      
+      // localStorage에도 복원
+      const savedState: SavedAuctionState = {
+        teams: previousState.teams.map((t: Team) => ({
+          leaderId: t.leader.id,
+          currentPoints: t.leader.currentPoints,
+          members: t.members.map((m) => ({
+            playerId: m.player.id,
+            price: m.price,
+            pickOrder: m.pickOrder,
+          })),
+          totalSpent: t.totalSpent,
+        })),
+        assignedPlayerIds: previousState.players
+          .filter((p: Player) => !previousState.availablePlayers.find((ap: Player) => ap.id === p.id))
+          .map((p: Player) => p.id),
+      };
+      saveAuctionState(savedState);
+      
+      return h.slice(0, -1); // 마지막 히스토리 제거
+    });
   }, []);
 
   // 지명 취소 (멤버 제거)
@@ -631,6 +672,7 @@ export function useAuctionStore() {
     pickPlayer,
     pass,
     cancelRound,
+    undo,
     removeMember,
     resetAuction,
     sortPlayersByTier,
