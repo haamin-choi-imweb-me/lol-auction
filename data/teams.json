@@ -3,54 +3,63 @@
     "id": "t1",
     "name": "시나래",
     "initialPoints": 5000,
-    "currentPoints": 5000
+    "currentPoints": 5000,
+    "tier": ""
   },
   {
     "id": "t2",
     "name": "zzackzzack",
     "initialPoints": 4000,
-    "currentPoints": 4000
+    "currentPoints": 4000,
+    "tier": ""
   },
   {
     "id": "t3",
     "name": "마효",
     "initialPoints": 3000,
-    "currentPoints": 3000
+    "currentPoints": 3000,
+    "tier": ""
   },
   {
     "id": "t4",
     "name": "건우비빔밥",
     "initialPoints": 4500,
-    "currentPoints": 4500
+    "currentPoints": 4500,
+    "tier": ""
   },
   {
     "id": "t1764848930283",
     "name": "김영재",
     "initialPoints": 5500,
-    "currentPoints": 5500
+    "currentPoints": 5500,
+    "tier": ""
   },
   {
     "id": "t1764848934469",
     "name": "뮌봉",
     "initialPoints": 6000,
-    "currentPoints": 6000
+    "currentPoints": 6000,
+    "tier": ""
   },
   {
     "id": "t1764848935825",
     "name": "test",
     "initialPoints": 3000,
-    "currentPoints": 3000
+    "currentPoints": 3000,
+    "tier": ""
   },
   {
     "id": "t1764848936930",
     "name": "test",
     "initialPoints": 3000,
-    "currentPoints": 3000
+    "currentPoints": 3000,
+    "tier": ""
   },
   {
     "id": "t1764848939062",
     "name": "test",
     "initialPoints": 3000,
-    "currentPoints": 3000
+    "currentPoints": 3000,
+    "tier": ""
   }
 ]

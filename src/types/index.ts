@@ -29,6 +29,7 @@ export interface TeamLeader {
   name: string;
   initialPoints: number;
   currentPoints: number;
+  tier: Tier | '';
 }
 
 // 팀 구성원 (낙찰된 선수)

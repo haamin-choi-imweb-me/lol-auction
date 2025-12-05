@@ -57,6 +57,7 @@ export default function AdminPage() {
     name: '',
     initialPoints: 3000,
     currentPoints: 3000,
+    tier: '' as Tier | '',
   });
   const [isEditingTeam, setIsEditingTeam] = useState(false);
 
@@ -172,6 +173,7 @@ export default function AdminPage() {
       name: '',
       initialPoints: 3000,
       currentPoints: 3000,
+      tier: '',
     });
     setIsEditingTeam(false);
   };
@@ -312,6 +314,23 @@ export default function AdminPage() {
                     />
                   </div>
                 )}
+                <div>
+                  <label className="block text-sm text-[var(--text-secondary)] mb-1">
+                    팀장 티어 (선택)
+                  </label>
+                  <select
+                    value={teamForm.tier}
+                    onChange={(e) => setTeamForm({ ...teamForm, tier: e.target.value as Tier | '' })}
+                    className="w-full px-4 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-white focus:border-[var(--accent-gold)] focus:outline-none"
+                  >
+                    <option value="">선택 안 함</option>
+                    {TIERS.map((tier) => (
+                      <option key={tier} value={tier}>
+                        {tier}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 btn-primary">
                     {isEditingTeam ? '수정' : '추가'}
@@ -348,7 +367,14 @@ export default function AdminPage() {
                         {idx + 1}
                       </span>
                       <div>
-                        <p className="font-semibold text-[var(--text-primary)]">{team.name}</p>
+                        <p className="font-semibold text-[var(--text-primary)]">
+                          {team.name}
+                          {team.tier && (
+                            <span className="ml-2 text-xs px-2 py-0.5 rounded bg-[var(--accent-magenta)]/20 text-[var(--accent-magenta)]">
+                              {team.tier}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-sm text-[var(--text-secondary)]">
                           현재: <span className="text-[var(--accent-cyan)]">{team.currentPoints.toLocaleString()}</span> / 초기: {team.initialPoints.toLocaleString()}
                         </p>

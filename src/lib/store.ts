@@ -189,10 +189,26 @@ function createInitialTeams(leaders: TeamLeader[]): Team[] {
 }
 
 // 보유 점수 높은 순으로 정렬된 팀 (4명 미만인 팀만)
+// 정렬 기준: 점수 높은 순 → 멤버 적은 순 → 티어 낮은 순
 function getEligibleTeamsSorted(teams: Team[]): Team[] {
   return [...teams]
     .filter((t) => t.members.length < 4)
-    .sort((a, b) => b.leader.currentPoints - a.leader.currentPoints);
+    .sort((a, b) => {
+      // 1. 점수 높은 순
+      if (b.leader.currentPoints !== a.leader.currentPoints) {
+        return b.leader.currentPoints - a.leader.currentPoints;
+      }
+      
+      // 2. 멤버 적은 순
+      if (a.members.length !== b.members.length) {
+        return a.members.length - b.members.length;
+      }
+      
+      // 3. 티어 낮은 순 (티어가 없으면 가장 낮은 것으로 간주)
+      const tierA = a.leader.tier || '아이언4';
+      const tierB = b.leader.tier || '아이언4';
+      return TIER_ORDER[tierA] - TIER_ORDER[tierB];
+    });
 }
 
 // 초기 상태
@@ -279,12 +295,13 @@ export function useAuctionStore() {
   }, [loadData]);
 
   // 라운드 시작
-  const startRound = useCallback((priceDecrement: number = 100) => {
+  const startRound = useCallback((priceDecrement: number = 20) => {
     setState((prev) => {
       const eligibleTeams = getEligibleTeamsSorted(prev.teams);
-      if (eligibleTeams.length < 2) return prev;
+      if (eligibleTeams.length === 0) return prev;
 
-      const startingPrice = eligibleTeams[1].leader.currentPoints;
+      // 시작가 = 가장 낮은 점수의 팀장
+      const startingPrice = Math.min(...eligibleTeams.map(t => t.leader.currentPoints));
 
       return {
         ...prev,
@@ -329,7 +346,7 @@ export function useAuctionStore() {
     setState((prev) => {
       if (!prev.currentRound || !prev.selectedPlayer) return prev;
 
-      const { currentPrice, bidOrder, currentBidderIndex } = prev.currentRound;
+      const { currentPrice, bidOrder, currentBidderIndex, priceDecrement } = prev.currentRound;
       const currentTeam = bidOrder[currentBidderIndex];
       const player = prev.selectedPlayer;
 
@@ -387,12 +404,37 @@ export function useAuctionStore() {
       };
       saveAuctionState(savedState);
 
+      // 낙찰 후 새 라운드를 낙찰 가격으로 시작
+      const newEligibleTeams = getEligibleTeamsSorted(updatedTeams);
+      
+      // 다음 라운드 가능 여부 확인
+      if (newEligibleTeams.length === 0 || newAvailablePlayers.length === 0) {
+        // 더 이상 라운드를 진행할 수 없음
+        return {
+          ...prev,
+          status: 'idle',
+          teams: updatedTeams,
+          availablePlayers: newAvailablePlayers,
+          currentRound: null,
+          selectedPlayer: null,
+          auctionHistory: [...prev.auctionHistory, historyItem],
+        };
+      }
+
+      // 새 라운드 시작 (낙찰 가격으로)
       return {
         ...prev,
-        status: 'idle',
+        status: 'in_progress',
         teams: updatedTeams,
         availablePlayers: newAvailablePlayers,
-        currentRound: null,
+        currentRound: {
+          startingPrice: currentPrice,
+          currentPrice: currentPrice,
+          priceDecrement,
+          bidOrder: newEligibleTeams,
+          currentBidderIndex: 0,
+          passedInCycle: [],
+        },
         selectedPlayer: null,
         auctionHistory: [...prev.auctionHistory, historyItem],
       };
